@@ -1,0 +1,85 @@
+##Removing Variables and repalcing variables
+#remove the variables that we do not want to use in the training data for the model: PassengerID, Ticket, Fare, Cabin, and Embarked.
+trainData = traindata[-c(1,9:12)]
+#Replacing Gender variable (Male/Female) with a Dummy Variable (0/1)
+traindata$Sex = gsub("female", 1, trainData$Sex)
+traindata$Sex = gsub("^male", 0, trainData$Sex)
+
+##Making Inferences on Missing Age Values: Rename each name with a shortened tag
+#Lastly, upon examining our dataset, we see that many entries for “age” are missing. 
+#Because age entries could be an important variable we try inferencing them based on a relationship between title and age; 
+#we’re essentially assuming that Mrs.X will older than Ms.X. 
+#Moreover, we’re (naively) assuming that people with the same titles are closer together in age.
+master_vector = grep("Master.",traindata$Name, fixed=TRUE)
+miss_vector = grep("Miss.", traindata$Name, fixed=TRUE)
+mrs_vector = grep("Mrs.", traindata$Name, fixed=TRUE)
+mr_vector = grep("Mr.", traindata$Name, fixed=TRUE)
+dr_vector = grep("Dr.", traindata$Name, fixed=TRUE)
+for(i in master_vector) {
+  traindata$Name[i] = "Master"
+}
+for(i in miss_vector) {
+  traindata$Name[i] = "Miss"
+}
+for(i in mrs_vector) {
+  traindata$Name[i] = "Mrs"
+}
+for(i in mr_vector) {
+  traindata$Name[i] = "Mr"
+}
+for(i in dr_vector) {
+  traindata$Name[i] = "Dr"
+}
+
+##Making Inference on Missing Age Values: Inputting Title-group averages
+#This means that if we have a missing age entry for a man named Mr. Bond
+#we substitute his age for the average age for all passenger with the title Mr. Similarly for Master, Miss, Mrs, and Dr. 
+#We then write a for loop that goes through the entire Train data set and checks if the age value is missing. 
+#If it is, we assign it according to the surname of the observation.
+master_age = round(mean(traindata$Age[traindata$Name == "Master"], na.rm = TRUE), digits = 2)
+miss_age = round(mean(traindata$Age[traindata$Name == "Miss"], na.rm = TRUE), digits =2)
+mrs_age = round(mean(traindata$Age[traindata$Name == "Mrs"], na.rm = TRUE), digits = 2)
+mr_age = round(mean(traindata$Age[traindata$Name == "Mr"], na.rm = TRUE), digits = 2)
+dr_age = round(mean(traindata$Age[traindata$Name == "Dr"], na.rm = TRUE), digits = 2)
+for (i in 1:nrow(traindata)) {
+  if (is.na(traindata[i,5])) {
+    if (traindata$Name[i] == "Master") {
+      traindata$Age[i] = master_age
+    } else if (traindata$Name[i] == "Miss") {
+      traindata$Age[i] = miss_age
+    } else if (traindata$Name[i] == "Mrs") {
+      traindata$Age[i] = mrs_age
+    } else if (traindata$Name[i] == "Mr") {
+      traindata$Age[i] = mr_age
+    } else if (traindata$Name[i] == "Dr") {
+      traindata$Age[i] = dr_age
+    } else {
+      print("Uncaught Title")
+    }
+  }
+}
+
+##Creating New Variables to Strengthen Our Model
+#By creating new variables we may be able to predict the survival of the passengers even more closely. 
+#This part of the walkthrough specifically includes three variables which we found to help our model. 
+#What the added variables mean?
+#Do they make intuitive sense? 
+#How might these variables affect the survival rate?
+for (i in 1:nrow(traindata)) {
+  if (is.na(traindata[i,4])) {
+    if (traindata[i, 2] == "Master") {
+      traindata[i, 4] <- master_age
+    } else if (traindata[i, 2] == "Miss") {
+      traindata[i, 4] <- miss_age
+    } else if (traindata[i, 2] == "Mrs") {
+      traindata[i, 4] <- mrs_age
+    } else if (traindata[i, 2] == "Mr") {
+      traindata[i, 4] <- mr_age
+    } else if (traindata[i, 2] == "Dr") {
+      traindata[i, 4] <- dr_age
+    } else {
+      print(paste("Uncaught Title at: ", i, sep=""))
+      print(paste("The Title unrecognized was: ", traindata[i,2], sep=""))
+    }
+  }
+}
